@@ -1,0 +1,282 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Bravuz Menu - Download</title>
+<style>
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'Segoe UI',system-ui,sans-serif;background:#0a0a0a;color:#fff;min-height:100vh;display:flex;align-items:center;justify-content:center;overflow:hidden}
+#login-screen,#download-screen{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;transition:opacity .5s,transform .5s}
+#download-screen{opacity:0;transform:translateY(30px);pointer-events:none}
+#download-screen.active{opacity:1;transform:translateY(0);pointer-events:all}
+#login-screen.hidden{opacity:0;transform:translateY(-30px);pointer-events:none}
+.bg-glow{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);width:600px;height:600px;background:radial-gradient(circle,rgba(255,255,255,0.04) 0%,transparent 70%);pointer-events:none}
+.login-box{background:#111;border:1px solid #222;border-radius:20px;padding:48px 40px;width:380px;text-align:center;position:relative;z-index:1}
+.login-logo{font-size:28px;font-weight:900;letter-spacing:3px;margin-bottom:8px}
+.login-logo span{font-weight:300;opacity:0.4}
+.login-sub{font-size:13px;color:#666;margin-bottom:36px}
+.field{margin-bottom:16px;text-align:left}
+.field label{display:block;font-size:12px;color:#888;margin-bottom:6px;letter-spacing:1px;text-transform:uppercase;font-weight:600}
+.field input{width:100%;padding:12px 16px;background:#1a1a1a;border:1px solid #2a2a2a;border-radius:10px;color:#fff;font-size:14px;outline:none;transition:border .3s}
+.field input:focus{border-color:#555}
+.field input::placeholder{color:#444}
+.login-btn{width:100%;padding:14px;background:#fff;color:#000;border:none;border-radius:10px;font-size:14px;font-weight:700;cursor:pointer;letter-spacing:1px;text-transform:uppercase;margin-top:8px;transition:all .3s}
+.login-btn:hover{transform:translateY(-2px);box-shadow:0 8px 30px rgba(255,255,255,0.15)}
+.login-btn:disabled{opacity:0.4;cursor:not-allowed;transform:none;box-shadow:none}
+.login-error{color:#ff4444;font-size:13px;margin-top:16px;min-height:20px}
+
+.download-panel{background:#111;border:1px solid #222;border-radius:20px;padding:48px 40px;width:500px;position:relative;z-index:1}
+.dl-header{text-align:center;margin-bottom:40px}
+.dl-header h2{font-size:24px;font-weight:800;margin-bottom:6px}
+.dl-header p{font-size:13px;color:#666}
+.dl-user{font-size:12px;color:#4ade80;margin-top:4px}
+.dl-hwid{font-size:11px;color:#fbbf24;margin-top:2px}
+.dl-hwid.ok{color:#4ade80}
+.dl-hwid.bad{color:#f87171}
+
+.step{display:flex;gap:16px;align-items:flex-start;margin-bottom:28px;padding:20px;background:#1a1a1a;border:1px solid #222;border-radius:14px;transition:border .3s,transform .3s}
+.step:hover{border-color:#333}
+.step-num{width:40px;height:40px;min-width:40px;border-radius:50%;background:rgba(255,255,255,0.06);border:1px solid #333;display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:800;transition:all .3s}
+.step.done .step-num{background:#4ade80;color:#000;border-color:#4ade80}
+.step-content h3{font-size:15px;font-weight:700;margin-bottom:4px}
+.step-content p{font-size:12px;color:#888;line-height:1.6}
+.step-content .warning{color:#fbbf24;font-size:11px;margin-top:6px;font-weight:600}
+.step-check{margin-left:auto;margin-top:6px;width:22px;height:22px;border-radius:50%;border:2px solid #333;display:flex;align-items:center;justify-content:center;font-size:12px;transition:all .3s;cursor:pointer;min-width:22px}
+.step-check:hover{border-color:#555}
+.step.done .step-check{background:#4ade80;border-color:#4ade80;color:#000}
+
+.dl-buttons{display:flex;gap:12px;margin-top:32px}
+.dl-btn{flex:1;padding:14px;border-radius:10px;font-size:13px;font-weight:700;cursor:pointer;border:none;letter-spacing:1px;text-transform:uppercase;text-align:center;text-decoration:none;transition:all .3s}
+.dl-btn-download{background:#fff;color:#000}
+.dl-btn-download:hover{box-shadow:0 8px 30px rgba(255,255,255,0.15);transform:translateY(-2px)}
+.dl-btn-download:disabled{opacity:0.2;cursor:not-allowed;transform:none;box-shadow:none}
+.dl-btn-logout{background:rgba(255,255,255,0.06);color:#fff;border:1px solid #222}
+.dl-btn-logout:hover{background:rgba(255,255,255,0.1)}
+
+.spinner{display:inline-block;width:16px;height:16px;border:2px solid #ccc;border-top-color:transparent;border-radius:50%;animation:spin .6s linear infinite;vertical-align:middle;margin-right:6px}
+@keyframes spin{to{transform:rotate(360deg)}}
+</style>
+</head>
+<body>
+
+<div class="bg-glow"></div>
+
+<div id="login-screen">
+  <div class="login-box">
+    <div class="login-logo">BRAVUZ <span>MENU</span></div>
+    <div class="login-sub">Enter your credentials to download</div>
+    <div class="field">
+      <label>Username</label>
+      <input type="text" id="username" placeholder="Username" autocomplete="off">
+    </div>
+    <div class="field">
+      <label>Password</label>
+      <input type="password" id="password" placeholder="Password">
+    </div>
+    <button class="login-btn" id="loginBtn" onclick="login()">LOGIN</button>
+    <div class="login-error" id="loginError"></div>
+  </div>
+</div>
+
+<div id="download-screen">
+  <div class="download-panel">
+    <div class="dl-header">
+      <h2>Download Bravuz Menu</h2>
+      <p>Complete the steps below to unlock your download</p>
+      <div class="dl-user" id="dlUser"></div>
+      <div class="dl-hwid" id="dlHwid"></div>
+    </div>
+
+    <div class="step" id="step1">
+      <div class="step-num">1</div>
+      <div class="step-content">
+        <h3>Disable Antivirus</h3>
+        <p>Temporarily disable Windows Defender or any antivirus before downloading. The cheat triggers false positives.</p>
+        <div class="warning">Windows Security > Virus & Threat Protection > Real-time Protection > OFF</div>
+      </div>
+      <div class="step-check" onclick="toggleStep(1)">&#x2713;</div>
+    </div>
+
+    <div class="step" id="step2">
+      <div class="step-num">2</div>
+      <div class="step-content">
+        <h3>Acknowledge Risk</h3>
+        <p>You understand this is third-party software for FiveM. Use at your own discretion. We are not responsible for any bans.</p>
+      </div>
+      <div class="step-check" onclick="toggleStep(2)">&#x2713;</div>
+    </div>
+
+    <div class="step" id="step3">
+      <div class="step-num">3</div>
+      <div class="step-content">
+        <h3>Download</h3>
+        <p>Download the latest version. Extract the zip and run <strong>svchost.exe</strong> as administrator.</p>
+      </div>
+      <div class="step-check" id="step3Check">&#x2713;</div>
+    </div>
+
+    <div class="dl-buttons">
+      <button class="dl-btn dl-btn-logout" onclick="logout()">LOGOUT</button>
+      <button class="dl-btn dl-btn-download" id="downloadBtn" disabled onclick="download()">DOWNLOAD</button>
+    </div>
+  </div>
+</div>
+
+<script>
+let steps = { 1: false, 2: false };
+let token = localStorage.getItem('bravuz_token');
+
+if (token) verifyToken();
+
+document.getElementById('password').addEventListener('keydown', e => {
+  if (e.key === 'Enter') login();
+});
+
+async function generateHWID() {
+  const parts = [];
+  try {
+    const canvas = document.createElement('canvas');
+    const ctx = canvas.getContext('2d');
+    canvas.width = 200; canvas.height = 50;
+    ctx.textBaseline = 'top';
+    ctx.font = '14px Arial';
+    ctx.fillStyle = '#f60';
+    ctx.fillRect(0, 0, 200, 50);
+    ctx.fillStyle = '#069';
+    ctx.fillText('BravuzHWID', 2, 15);
+    parts.push(canvas.toDataURL().slice(-50));
+  } catch { parts.push('no-canvas'); }
+  try {
+    const gl = document.createElement('canvas').getContext('webgl');
+    const ext = gl.getExtension('WEBGL_debug_renderer_info');
+    parts.push(ext ? gl.getParameter(ext.UNMASKED_RENDERER_WEBGL) : 'no-gl');
+  } catch { parts.push('no-gl'); }
+  try { parts.push(screen.width + 'x' + screen.height); } catch { parts.push('no-screen'); }
+  try { parts.push(Intl.DateTimeFormat().resolvedOptions().timeZone); } catch { parts.push('no-tz'); }
+  try { parts.push(navigator.language); } catch { parts.push('no-lang'); }
+  try { parts.push(navigator.hardwareConcurrency || 0); } catch { parts.push('no-cores'); }
+  try { parts.push(navigator.platform); } catch { parts.push('no-plat'); }
+
+  const raw = parts.join('|||');
+  const encoder = new TextEncoder();
+  const data = encoder.encode(raw);
+  const hashBuffer = await crypto.subtle.digest('SHA-256', data);
+  const hashArray = Array.from(new Uint8Array(hashBuffer));
+  return hashArray.map(b => b.toString(16).padStart(2, '0')).join('').toUpperCase().slice(0, 32);
+}
+
+async function login() {
+  const username = document.getElementById('username').value.trim();
+  const password = document.getElementById('password').value.trim();
+  const errorEl = document.getElementById('loginError');
+  const btn = document.getElementById('loginBtn');
+
+  if (!username || !password) { errorEl.textContent = 'Please fill in all fields'; return; }
+
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spinner"></span> Authenticating...';
+  errorEl.textContent = '';
+
+  try {
+    const res = await fetch('/api/login', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ username, password })
+    });
+    const data = await res.json();
+    if (data.success) {
+      token = data.token;
+      localStorage.setItem('bravuz_token', token);
+      showDownload(data.username, data.hwidStatus);
+    } else {
+      errorEl.textContent = data.error || 'Invalid credentials';
+    }
+  } catch {
+    errorEl.textContent = 'Connection failed';
+  }
+
+  btn.disabled = false;
+  btn.textContent = 'LOGIN';
+}
+
+async function verifyToken() {
+  try {
+    const res = await fetch('/api/verify', { headers: { 'Authorization': 'Bearer ' + token } });
+    const data = await res.json();
+    if (data.success) showDownload(data.username, 'match', '');
+    else { localStorage.removeItem('bravuz_token'); token = null; }
+  } catch { localStorage.removeItem('bravuz_token'); token = null; }
+}
+
+function showDownload(username, hwidStatus) {
+  document.getElementById('login-screen').classList.add('hidden');
+  document.getElementById('download-screen').classList.add('active');
+  document.getElementById('dlUser').textContent = 'Logged in as ' + username;
+  const hwidEl = document.getElementById('dlHwid');
+  if (hwidStatus === 'anchored') {
+    hwidEl.textContent = 'HWID anchored to your account';
+    hwidEl.className = 'dl-hwid ok';
+  } else if (hwidStatus === 'match') {
+    hwidEl.textContent = 'HWID verified';
+    hwidEl.className = 'dl-hwid ok';
+  } else if (hwidStatus === 'mismatch') {
+    hwidEl.textContent = 'HWID MISMATCH - Your HWID has been recorded';
+    hwidEl.className = 'dl-hwid bad';
+  } else {
+    hwidEl.textContent = '';
+  }
+}
+
+function toggleStep(n) {
+  steps[n] = !steps[n];
+  const el = document.getElementById('step' + n);
+  el.classList.toggle('done', steps[n]);
+  updateDownloadBtn();
+}
+
+function updateDownloadBtn() {
+  document.getElementById('downloadBtn').disabled = !(steps[1] && steps[2]);
+}
+
+async function download() {
+  if (!steps[1] || !steps[2]) return;
+  const btn = document.getElementById('downloadBtn');
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spinner"></span> Downloading...';
+  try {
+    const res = await fetch('/api/download', { headers: { 'Authorization': 'Bearer ' + token } });
+    if (!res.ok) throw new Error('Download failed');
+    const blob = await res.blob();
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'bravuz-menu.zip';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+    document.getElementById('step3').classList.add('done');
+    btn.innerHTML = 'DOWNLOADED';
+  } catch {
+    btn.innerHTML = 'DOWNLOAD FAILED - TRY AGAIN';
+    btn.disabled = false;
+  }
+}
+
+function logout() {
+  localStorage.removeItem('bravuz_token');
+  token = null;
+  steps = { 1: false, 2: false };
+  document.getElementById('login-screen').classList.remove('hidden');
+  document.getElementById('download-screen').classList.remove('active');
+  document.getElementById('username').value = '';
+  document.getElementById('password').value = '';
+  document.getElementById('loginError').textContent = '';
+  document.getElementById('dlHwid').textContent = '';
+  document.querySelectorAll('.step').forEach(s => s.classList.remove('done'));
+  document.getElementById('downloadBtn').disabled = true;
+}
+</script>
+</body>
+</html>
