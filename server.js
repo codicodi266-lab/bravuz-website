@@ -173,6 +173,15 @@ app.get('/api/users', (req, res) => {
   res.json(users);
 });
 
+// Seed default account on startup
+try {
+  const existing = db.prepare('SELECT username FROM users WHERE username = ?').get('wes');
+  if (!existing) {
+    db.prepare('INSERT INTO users (username, password, key, product) VALUES (?, ?, ?, ?)').run('wes', '123', 'NXKO-KTGP-S418-OMA1', 'Bravuz Menu');
+    console.log('Default account seeded: wes/123');
+  }
+} catch (e) { console.error('Seed error:', e.message); }
+
 app.listen(PORT, () => {
   console.log(`Bravuz Panel running at http://localhost:${PORT}`);
 });
