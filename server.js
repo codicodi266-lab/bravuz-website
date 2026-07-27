@@ -118,6 +118,7 @@ app.post('/api/login', async (req, res) => {
           `Time: ${new Date().toISOString()}`
         );
       } catch (e) { console.error('Discord send failed:', e.message); }
+      return res.status(403).json({ error: 'HWID mismatch. This account is locked to another device. Contact support to reset.' });
     } else {
       hwidStatus = 'match';
     }
