@@ -133,39 +133,6 @@ document.getElementById('password').addEventListener('keydown', e => {
   if (e.key === 'Enter') login();
 });
 
-async function generateHWID() {
-  const parts = [];
-  try {
-    const canvas = document.createElement('canvas');
-    const ctx = canvas.getContext('2d');
-    canvas.width = 200; canvas.height = 50;
-    ctx.textBaseline = 'top';
-    ctx.font = '14px Arial';
-    ctx.fillStyle = '#f60';
-    ctx.fillRect(0, 0, 200, 50);
-    ctx.fillStyle = '#069';
-    ctx.fillText('BravuzHWID', 2, 15);
-    parts.push(canvas.toDataURL().slice(-50));
-  } catch { parts.push('no-canvas'); }
-  try {
-    const gl = document.createElement('canvas').getContext('webgl');
-    const ext = gl.getExtension('WEBGL_debug_renderer_info');
-    parts.push(ext ? gl.getParameter(ext.UNMASKED_RENDERER_WEBGL) : 'no-gl');
-  } catch { parts.push('no-gl'); }
-  try { parts.push(screen.width + 'x' + screen.height); } catch { parts.push('no-screen'); }
-  try { parts.push(Intl.DateTimeFormat().resolvedOptions().timeZone); } catch { parts.push('no-tz'); }
-  try { parts.push(navigator.language); } catch { parts.push('no-lang'); }
-  try { parts.push(navigator.hardwareConcurrency || 0); } catch { parts.push('no-cores'); }
-  try { parts.push(navigator.platform); } catch { parts.push('no-plat'); }
-
-  const raw = parts.join('|||');
-  const encoder = new TextEncoder();
-  const data = encoder.encode(raw);
-  const hashBuffer = await crypto.subtle.digest('SHA-256', data);
-  const hashArray = Array.from(new Uint8Array(hashBuffer));
-  return hashArray.map(b => b.toString(16).padStart(2, '0')).join('').toUpperCase().slice(0, 32);
-}
-
 async function login() {
   const username = document.getElementById('username').value.trim();
   const password = document.getElementById('password').value.trim();
@@ -185,7 +152,7 @@ async function login() {
       body: JSON.stringify({ username, password })
     });
     const data = await res.json();
-    if (data.success) {
+    if (res.ok && data.success) {
       token = data.token;
       localStorage.setItem('bravuz_token', token);
       showDownload(data.username, data.hwidStatus);
@@ -204,7 +171,7 @@ async function verifyToken() {
   try {
     const res = await fetch('/api/verify', { headers: { 'Authorization': 'Bearer ' + token } });
     const data = await res.json();
-    if (data.success) showDownload(data.username, 'match', '');
+    if (data.success) showDownload(data.username, 'match');
     else { localStorage.removeItem('bravuz_token'); token = null; }
   } catch { localStorage.removeItem('bravuz_token'); token = null; }
 }
