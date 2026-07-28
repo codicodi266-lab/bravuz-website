@@ -123,7 +123,7 @@ app.post('/api/login', async (req, res) => {
       hwidStatus = 'match';
     }
   } else if (user.hwid && user.hwid !== '') {
-    hwidStatus = 'anchored';
+    return res.status(403).json({ error: 'This account is HWID-locked. Enter your HWID.', hwidRequired: true });
   }
 
   const token = createSession(user.username);

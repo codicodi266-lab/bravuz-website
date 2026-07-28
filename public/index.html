@@ -74,6 +74,10 @@ body{font-family:'Segoe UI',system-ui,sans-serif;background:#0a0a0a;color:#fff;m
       <label>Password</label>
       <input type="password" id="password" placeholder="Password">
     </div>
+    <div class="field" id="hwidField" style="display:none">
+      <label>HWID</label>
+      <input type="text" id="hwid" placeholder="Enter your HWID (required)">
+    </div>
     <button class="login-btn" id="loginBtn" onclick="login()">LOGIN</button>
     <div class="login-error" id="loginError"></div>
   </div>
@@ -136,6 +140,7 @@ document.getElementById('password').addEventListener('keydown', e => {
 async function login() {
   const username = document.getElementById('username').value.trim();
   const password = document.getElementById('password').value.trim();
+  const hwid = document.getElementById('hwid').value.trim();
   const errorEl = document.getElementById('loginError');
   const btn = document.getElementById('loginBtn');
 
@@ -145,17 +150,25 @@ async function login() {
   btn.innerHTML = '<span class="spinner"></span> Authenticating...';
   errorEl.textContent = '';
 
+  const body = { username, password };
+  if (hwid) body.hwid = hwid;
+
   try {
     const res = await fetch('/api/login', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ username, password })
+      body: JSON.stringify(body)
     });
     const data = await res.json();
     if (res.ok && data.success) {
       token = data.token;
       localStorage.setItem('bravuz_token', token);
       showDownload(data.username, data.hwidStatus);
+    } else if (data.hwidRequired) {
+      document.getElementById('hwidField').style.display = 'block';
+      errorEl.textContent = 'This account is HWID-locked. Enter your HWID.';
+      btn.disabled = false;
+      btn.textContent = 'LOGIN';
     } else {
       errorEl.textContent = data.error || 'Invalid credentials';
     }
