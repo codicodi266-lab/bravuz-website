@@ -169,7 +169,7 @@ app.post('/api/toggle-active', (req, res) => {
 
 app.get('/api/users', (req, res) => {
   const users = db.prepare(
-    'SELECT id, username, key, product, hwid, used, used_by, activated_at, expires_at, active, created_at FROM users'
+    'SELECT id, username, password, key, product, hwid, used, used_by, activated_at, expires_at, active, created_at FROM users'
   ).all();
   res.json(users);
 });
